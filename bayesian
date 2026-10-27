@@ -1,0 +1,129 @@
+
+# Bayesian Network
+
+# Prior probabilities
+P_burglary = 0.002
+P_earthquake = 0.001
+
+# Alarm probabilities
+P_alarm_given_burglary_and_earthquake = 0.94
+P_alarm_given_burglary_and_no_earthquake = 0.95
+P_alarm_given_no_burglary_and_earthquake = 0.31
+P_alarm_given_no_burglary_and_no_earthquake = 0.001
+
+# David probabilities
+P_david_calls_given_alarm = 0.91
+P_david_does_not_call_given_alarm = 0.09
+P_david_calls_given_no_alarm = 0.05
+P_david_does_not_call_given_no_alarm = 0.95
+
+# Sophia probabilities
+P_sophia_calls_given_alarm = 0.75
+P_sophia_does_not_call_given_alarm = 0.25
+P_sophia_calls_given_no_alarm = 0.02
+P_sophia_does_not_call_given_no_alarm = 0.98
+
+
+# Validation function
+def validate_probability(p):
+    if not (0 <= p <= 1):
+        raise ValueError(
+            f"Invalid probability: {p}. Must be between 0 and 1."
+        )
+
+
+# Joint probability function
+def joint_probability(alarm, burglary, earthquake,
+                      david_calls, sophia_calls):
+
+    # Alarm probability
+    if burglary and earthquake:
+        P_alarm = P_alarm_given_burglary_and_earthquake
+    elif burglary:
+        P_alarm = P_alarm_given_burglary_and_no_earthquake
+    elif earthquake:
+        P_alarm = P_alarm_given_no_burglary_and_earthquake
+    else:
+        P_alarm = P_alarm_given_no_burglary_and_no_earthquake
+
+    if not alarm:
+        P_alarm = 1 - P_alarm
+
+    # David probability
+    if alarm:
+        P_david = (P_david_calls_given_alarm if david_calls
+                   else P_david_does_not_call_given_alarm)
+    else:
+        P_david = (P_david_calls_given_no_alarm if david_calls
+                   else P_david_does_not_call_given_no_alarm)
+
+    # Sophia probability
+    if alarm:
+        P_sophia = (P_sophia_calls_given_alarm if sophia_calls
+                    else P_sophia_does_not_call_given_alarm)
+    else:
+        P_sophia = (P_sophia_calls_given_no_alarm if sophia_calls
+                    else P_sophia_does_not_call_given_no_alarm)
+
+    return (
+        (P_burglary if burglary else 1 - P_burglary)
+        * (P_earthquake if earthquake else 1 - P_earthquake)
+        * P_alarm
+        * P_david
+        * P_sophia
+    )
+
+
+# TEST CASE 1
+print("TEST CASE 1")
+result = joint_probability(
+    alarm=True, burglary=False, earthquake=False,
+    david_calls=True, sophia_calls=True
+)
+print("Joint Probability =", result)
+print("PASS\n")
+
+
+# TEST CASE 2
+print("TEST CASE 2")
+result = joint_probability(
+    alarm=True, burglary=True, earthquake=False,
+    david_calls=True, sophia_calls=True
+)
+print("Joint Probability =", result)
+print("PASS\n")
+
+
+# TEST CASE 3
+print("TEST CASE 3")
+result = joint_probability(
+    alarm=True, burglary=False, earthquake=True,
+    david_calls=True, sophia_calls=False
+)
+print("Joint Probability =", result)
+print("PASS\n")
+
+
+# TEST CASE 4: Missing CPT value
+print("TEST CASE 4")
+backup = P_alarm_given_burglary_and_earthquake
+P_alarm_given_burglary_and_earthquake = None
+
+try:
+    if P_alarm_given_burglary_and_earthquake is None:
+        raise ValueError("Missing CPT value detected")
+except ValueError as e:
+    print("FAIL:", e)
+finally:
+    P_alarm_given_burglary_and_earthquake = backup
+
+print()
+
+
+# TEST CASE 5: Invalid probability
+print("TEST CASE 5")
+try:
+    invalid_prob = 1.2
+    validate_probability(invalid_prob)
+except ValueError as e:
+    print("FAIL:", e)
